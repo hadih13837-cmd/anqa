@@ -1,23 +1,13 @@
-# عنقا (ANQA)
+# عنقا روی GitHub Pages + Cloudflare Workers
 
-## اجرا روی کامپیوتر
-    cp .env.example .env      # کلید را داخلش بگذار
-    node server.js            # سپس باز کن: http://localhost:3000
+صفحه (index.html, config.js) → GitHub Pages
+سرور (worker.js) → Cloudflare Workers (رایگان)
 
-## آنلاین کردن
-سرور بدون وابستگی است (فقط Node 18+ یا Docker).
-
-**Render.com** — مخزن را در GitHub بگذار (`.env` در `.gitignore` است و آپلود نمی‌شود) ← New → Blueprint ← `DEEPSEEK_API_KEY` را در پنل وارد کن. (دیسک ۱ گیگ برای نگه‌داشتن کاربران و تصاویر.)
-
-**VPS (هر سرور خارج از ایران)**
-
-    docker build -t anqa .
-    docker run -d --restart=always -p 80:3000 -v anqa-data:/data -e DEEPSEEK_API_KEY=sk-... anqa
-
-برای HTTPS جلویش Caddy یا Cloudflare بگذار.
-
-## امنیت
-- کلید فقط روی سرور است و به مرورگر نمی‌رسد.
-- رمزها با scrypt هش می‌شوند؛ توکن ورود امضاشده ۳۰ روزه است.
-- محدودیت: ۴۰ پیام در دقیقه، ۳۰۰ پیام در روز برای هر کاربر (`DAILY_LIMIT`)، ۸ ثبت‌نام در ساعت برای هر IP.
-- گفتگوها فقط در مرورگر هر کاربر ذخیره می‌شود، نه روی سرور.
+1. cloudflare.com ← Workers & Pages ← Create ← Hello World ← نام: anqa ← Deploy ← Edit code ← همه‌ی کد را با worker.js عوض کن ← Deploy
+2. Storage & Databases ← KV ← Create (نام: anqa-users)
+3. Worker ← Settings ← Bindings ← Add ← KV namespace ← Variable name: USERS ← همان KV
+4. Settings ← Variables and Secrets ← Add (نوع Secret):
+   DEEPSEEK_API_KEY = کلید DeepSeek (ترجیحاً کلید جدید)
+   APP_SECRET = یک رشته‌ی تصادفی طولانی
+   (اختیاری، Text) ALLOWED_ORIGIN = https://hadih13837-cmd.github.io
+5. آدرس Worker (مثل https://anqa.xxx.workers.dev) را در config.js بگذار و index.html و config.js را در GitHub جایگزین کن.

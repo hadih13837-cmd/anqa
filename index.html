@@ -298,7 +298,9 @@ textarea::placeholder{color:var(--mute)}
 </div></div>
 <div class="toast" id="toast"></div>
 
+<script src="config.js"></script>
 <script>
+const A=p=>(window.ANQA_API||'').replace(/\/$/,'')+p;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -313,7 +315,7 @@ let S={chats:[],cur:null,set:{ratio:'1:1',img:'flux'}};
 const KEYS=()=>'anqa_data_'+user.id;
 const saveS=()=>{const c=JSON.parse(JSON.stringify(S));c.chats.forEach(ch=>ch.msgs.forEach(m=>{if(m.imgs)m.imgs=m.imgs.map(()=>null);delete m.docs}));ls.set(KEYS(),c)};
 async function api(path,opt={}){
-  const r=await fetch('/api'+path,{...opt,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opt.headers||{})}});
+  const r=await fetch(A('/api'+path),{...opt,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opt.headers||{})}});
   if(r.status===401&&token&&path!=='/login'){logout(true);throw new Error('نشست تمام شد؛ دوباره وارد شو.')}
   return r;
 }
@@ -343,7 +345,7 @@ $('#authForm').onsubmit=async e=>{
   try{
     const body={username:$('#aUser').value,password:$('#aPass').value};
     if(tab==='reg')body.name=$('#aName').value;
-    const j=await jsonOrThrow(await fetch('/api/'+(tab==='reg'?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
+    const j=await jsonOrThrow(await fetch(A('/api/'+(tab==='reg'?'register':'login')),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));
     token=j.token;user=j.user;ls.set('anqa_token',token);ls.set('anqa_user',user);
     $('#auth').classList.add('hidden');boot(tab==='reg');
   }catch(err){$('#aErr').textContent=err.message}
@@ -503,6 +505,7 @@ async function send(){
 async function drawImage(p){
   const c=cur();c.msgs.push({role:'assistant',text:'🎨 در حال طراحی تصویر… (تا ۳۰ ثانیه)'});await render();
   const j=await jsonOrThrow(await api('/image',{method:'POST',body:JSON.stringify({prompt:p,ratio:S.set.ratio,model:S.set.img})}));
+  if(j.url.startsWith('/'))j.url=A(j.url);
   await new Promise(res=>{const im=new Image();im.onload=res;im.onerror=()=>{j.fail=true;res()};im.src=j.url});
   if(j.fail)throw new Error('ساخت تصویر ناموفق بود؛ دوباره امتحان کن.');
   c.msgs[c.msgs.length-1]={role:'assistant',type:'image',url:j.url,prompt:j.prompt,orig:p};
@@ -548,7 +551,7 @@ async function boot(fresh){
   if(fresh)toast(`${user.name} عزیز، خوش آمدی 🌿`);
 }
 (async()=>{
-  try{CFG=await (await fetch('/api/config')).json()}catch{}
+  try{CFG=await (await fetch(A('/api/config'))).json()}catch{}
   let ok=false;
   if(token&&user){try{const j=await jsonOrThrow(await api('/me'));user=j.user;ls.set('anqa_user',user);ok=true}catch{}}
   setTimeout(()=>{
